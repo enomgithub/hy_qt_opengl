@@ -23,16 +23,19 @@
   (defn --init-- [self &optional [parent None]]
     ((. (super) --init--) parent)
 
-    (setv (. self gl-widget) (GLWidget))
-    (setv (. self x-slider) ((. self create-slider)))
-    (setv (. self y-slider) ((. self create-slider)))
-    (setv (. self z-slider) ((. self create-slider)))
-    
-    (setv main-layout ((. QtWidgets QHBoxLayout)))
-    ((. main-layout addWidget) (. self gl-widget))
-    ((. main-layout addWidget) (. self x-slider))
-    ((. main-layout addWidget) (. self y-slider))
-    ((. main-layout addWidget) (. self z-slider))
+    (setv (. self gl-widget) (GLWidget)
+          (. self x-slider) ((. self create-slider))
+          (. self y-slider) ((. self create-slider))
+          (. self z-slider) ((. self create-slider))
+
+          main-layout ((. QtWidgets QHBoxLayout)))
+
+    (list (map (fn [-widget]
+                 ((. main-layout addWidget) -widget))
+               [(. self gl-widget)
+                (. self x-slider)
+                (. self y-slider)
+                (. self z-slider)]))
     ((. self setLayout) main-layout)
 
     ((. self x-slider setValue) (* 170 16))
@@ -65,22 +68,22 @@
 
 
 (defclass GLWidget [(. QtOpenGL QGLWidget)]
-  (setv xRotationChanged ((. QtCore Signal) int))
-  (setv yRotationChanged ((. QtCore Signal) int))
-  (setv zRotationChanged ((. QtCore Signal) int))
+  (setv xRotationChanged ((. QtCore Signal) int)
+        yRotationChanged ((. QtCore Signal) int)
+        zRotationChanged ((. QtCore Signal) int))
 
   (defn --init-- [self &optional [parent None]]
     ((. (super) --init--) parent)
     
-    (setv (. self object) 0)
-    (setv (. self x-rot) 0)
-    (setv (. self y-rot) 0)
-    (setv (. self z-rot) 0)
+    (setv (. self object) 0
+          (. self x-rot) 0
+          (. self y-rot) 0
+          (. self z-rot) 0
 
-    (setv (. self last-pos) ((. QtCore QPoint)))
+          (. self last-pos) ((. QtCore QPoint))
 
-    (setv (. self trolltech-green) ((. QtGui QColor fromCmykF) 0.40 0.0 1.0 0.0))
-    (setv (. self trolltech-purple) ((. QtGui QColor fromCmykF) 0.39 0.39 0.0 0.0))
+          (. self trolltech-green) ((. QtGui QColor fromCmykF) 0.40 0.0 1.0 0.0)
+          (. self trolltech-purple) ((. QtGui QColor fromCmykF) 0.39 0.39 0.0 0.0))
 
     None)
  
@@ -132,9 +135,10 @@
     ((. GL glClear) (| (. GL GL_COLOR_BUFFER_BIT) (. GL GL_DEPTH_BUFFER_BIT)))
     ((. GL glLoadIdentity))
     ((. GL glTranslated) 0.0 0.0 -10.0)
-    ((. GL glRotated) (/ (. self x-rot) 16.0) 1.0 0.0 0.0)
-    ((. GL glRotated) (/ (. self y-rot) 16.0) 0.0 1.0 0.0)
-    ((. GL glRotated) (/ (. self z-rot) 16.0) 0.0 0.0 1.0)
+    (list (map (fn [-rot] ((. GL glRotated) #* -rot))
+               [(, (/ (. self x-rot) 16.0) 1.0 0.0 0.0)
+                (, (/ (. self y-rot) 16.0) 0.0 1.0 0.0)
+                (, (/ (. self z-rot) 16.0) 0.0 0.0 1.0)]))
     ((. GL glCallList) (. self object))
     None)
   
@@ -155,8 +159,8 @@
     None)
   
   (defn mouseMoveEvent [self event]
-    (setv dx (- ((. event x)) ((. self last-pos x))))
-    (setv dy (- ((. event y)) ((. self last-pos y))))
+    (setv dx (- ((. event x)) ((. self last-pos x)))
+          dy (- ((. event y)) ((. self last-pos y))))
 
     (cond [(& ((. event buttons)) (. QtCore Qt LeftButton))
            ((. self setXRotation) (+ (. self x-rot) (* 8 dy)))
@@ -168,17 +172,17 @@
     None)
   
   (defn -create-sector [self i num-sectors]
-    (setv angle1 (/ (* i 2 *pi*) num-sectors))
-    (setv x5 (* 0.30 ((. math sin) angle1)))
-    (setv y5 (* 0.30 ((. math cos) angle1)))
-    (setv x6 (* 0.20 ((. math sin) angle1)))
-    (setv y6 (* 0.20 ((. math cos) angle1)))
+    (setv angle1 (/ (* i 2 *pi*) num-sectors)
+          x5 (* 0.30 ((. math sin) angle1))
+          y5 (* 0.30 ((. math cos) angle1))
+          x6 (* 0.20 ((. math sin) angle1))
+          y6 (* 0.20 ((. math cos) angle1))
 
-    (setv angle2 (/ (* (+ i 1) 2 *pi*) num-sectors))
-    (setv x7 (* 0.20 ((. math sin) angle2)))
-    (setv y7 (* 0.20 ((. math cos) angle2)))
-    (setv x8 (* 0.30 ((. math sin) angle2)))
-    (setv y8 (* 0.30 ((. math cos) angle2)))
+          angle2 (/ (* (+ i 1) 2 *pi*) num-sectors)
+          x7 (* 0.20 ((. math sin) angle2))
+          y7 (* 0.20 ((. math cos) angle2))
+          x8 (* 0.30 ((. math sin) angle2))
+          y8 (* 0.30 ((. math cos) angle2)))
 
     ((. self quad) x5 y5 x6 y6 x7 y7 x8 y8)
 
@@ -193,14 +197,14 @@
 
     ((. GL glBegin) (. GL GL_QUADS))
 
-    (setv x1 0.06)
-    (setv y1 -0.14)
-    (setv x2 0.14)
-    (setv y2 -0.06)
-    (setv x3 0.08)
-    (setv y3 0.00)
-    (setv x4 0.30)
-    (setv y4 0.22)
+    (setv x1 0.06
+          y1 -0.14
+          x2 0.14
+          y2 -0.06
+          x3 0.08
+          y3 0.00
+          x4 0.30
+          y4 0.22)
 
     (list (map (fn [-list] ((. self quad) #* -list))
                [[x1 y1 x2 y2 y2 x2 y1 x1]
